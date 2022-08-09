@@ -61,6 +61,7 @@ pub struct OpenOptions {
     truncate: bool,
     create: bool,
     create_new: bool,
+    o_direct: bool,
     pub(crate) mode: libc::mode_t,
 }
 
@@ -93,6 +94,7 @@ impl OpenOptions {
             truncate: false,
             create: false,
             create_new: false,
+            o_direct: false,
             mode: 0o666,
         }
     }
@@ -122,6 +124,12 @@ impl OpenOptions {
         self
     }
 
+    pub fn read_o_direct(&mut self, read: bool, o_direct: bool) -> &mut OpenOptions {
+        self.read = read;
+        self.o_direct = o_direct;
+        self
+    }
+
     /// Sets the option for write access.
     ///
     /// This option, when true, will indicate that the file should be
@@ -147,6 +155,12 @@ impl OpenOptions {
     /// ```
     pub fn write(&mut self, write: bool) -> &mut OpenOptions {
         self.write = write;
+        self
+    }
+
+    pub fn write_o_direct(&mut self, write: bool, o_direct: bool) -> &mut OpenOptions {
+        self.write = write;
+        self.o_direct = o_direct;
         self
     }
 
@@ -371,6 +385,12 @@ impl OpenOptions {
             (false, true, false) => libc::O_TRUNC,
             (true, true, false) => libc::O_CREAT | libc::O_TRUNC,
             (_, _, true) => libc::O_CREAT | libc::O_EXCL,
+        })
+    }
+    pub(crate) fn o_direct_mode(&self) -> io::Result<libc::c_int> {
+        Ok(match (self.o_direct) {
+            false => 0,
+            true => libc::O_DIRECT,
         })
     }
 }
